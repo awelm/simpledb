@@ -2,7 +2,24 @@ package simpledb;
 
 import javax.xml.crypto.Data;
 import java.io.*;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
+
+class LRUMap<K, V> extends LinkedHashMap<K, V> {
+	private int cacheSize;
+
+	public LRUMap(int cacheSize) {
+		super(16, 0.75F, true);
+		this.cacheSize = cacheSize;
+	}
+
+	protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+		return size() >= cacheSize;
+	}
+}
 
 /**
  * BufferPool manages the reading and writing of pages into memory from disk.
@@ -25,7 +42,7 @@ public class BufferPool {
 	public static final int DEFAULT_PAGES = 50;
 
 	private int numPages;
-	private HashMap<PageId, Page> idToPage;
+	private LRUMap<PageId, Page> idToPageLRU;
 
 	/**
 	 * Creates a BufferPool that caches up to numPages pages.
@@ -34,7 +51,7 @@ public class BufferPool {
 	 */
 	public BufferPool(int nPages) {
 		numPages = nPages;
-		idToPage = new HashMap<PageId, Page>();
+		idToPageLRU = new LRUMap<>(nPages);
 	}
 
 	/**
@@ -53,15 +70,13 @@ public class BufferPool {
 	 */
 	public Page getPage(TransactionId tid, PageId pid, Permissions perm)
 			throws TransactionAbortedException, DbException{
-		if(idToPage.containsKey(pid))
-			return idToPage.get(pid);
-		else if(idToPage.size() >= numPages)
-			throw new DbException("Number of pages surpassed allowed limit");
+		if(idToPageLRU.containsKey(pid))
+			return idToPageLRU.get(pid);
 		else {
 			try {
 				DbFile dbf = Database.getCatalog().getDbFile(pid.getTableId());
 				Page fetchedPage = dbf.readPage(pid);
-				idToPage.put(pid, fetchedPage);
+				idToPageLRU.put(pid, fetchedPage);
 				return fetchedPage;
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -159,9 +174,10 @@ public class BufferPool {
 	 * dirty data to disk so will break simpledb if running in NO STEAL mode.
 	 */
 	public synchronized void flushAllPages() throws IOException {
-		// some code goes here
-		// not necessary for lab1
-
+		Set<PageId> pids = new HashSet<>(idToPageLRU.keySet());
+		for(PageId pid : pids) {
+			flushPage(pid);
+		}
 	}
 
 	/**
@@ -180,8 +196,15 @@ public class BufferPool {
 	 * @param pid an ID indicating the page to flush
 	 */
 	private synchronized void flushPage(PageId pid) throws IOException {
-		// some code goes here
-		// not necessary for lab1
+		// page isn't in memory so skip flush
+        if(!idToPageLRU.containsKey(pid))
+        	return;
+        Page p = idToPageLRU.get(pid);
+        // page is dirty so flush is needed
+        if(p.isDirty() != null) {
+			DbFile df = Database.getCatalog().getDbFile(pid.getTableId());
+			df.writePage(p);
+		}
 	}
 
 	/**
