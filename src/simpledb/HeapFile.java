@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.*;
+import java.nio.Buffer;
 import java.util.*;
 
 /**
@@ -78,8 +79,16 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+        int fileOffset = page.getId().pageno() * BufferPool.PAGE_SIZE;
+        try {
+			RandomAccessFile raf = new RandomAccessFile(f.getAbsoluteFile(), "rw");
+			raf.seek(fileOffset);
+			raf.write(page.getPageData());
+			raf.close();
+		} catch(Exception e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
     }
 
     /**
@@ -89,20 +98,40 @@ public class HeapFile implements DbFile {
     	return (int) Math.ceil(f.length() / BufferPool.PAGE_SIZE);
     }
 
+
     // see DbFile.java for javadocs
     public ArrayList<Page> addTuple(TransactionId tid, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for lab1
+        int numPages = this.numPages();
+        int tableId = getId();
+        for(int p=0; p<numPages; p++) {
+			HeapPageId pId = new HeapPageId(tableId, p);
+			//TODO: maintain a free space list in order to avoid iterating through all pages
+        	HeapPage hp = (HeapPage) Database.getBufferPool().getPage(tid, pId, null);
+        	if(hp.getNumEmptySlots() > 0) {
+        		hp.addTuple(t);
+				hp.markDirty(true, tid);
+        		return new ArrayList<>(Arrays.asList(new Page[] {hp}));
+			}
+		}
+
+        // create new page if no space in previous pages
+		HeapPageId newPageId = new HeapPageId(tableId, numPages);
+		HeapPage newPage = new HeapPage(newPageId, new byte[BufferPool.PAGE_SIZE]);
+		newPage.addTuple(t);
+		writePage(newPage);
+		return new ArrayList<>(Arrays.asList(new Page[] {newPage}));
     }
+
 
     // see DbFile.java for javadocs
     public Page deleteTuple(TransactionId tid, Tuple t)
         throws DbException, TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for lab1
+		HeapPage hp = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), null);
+		//TODO: Figure out how to garbage collect empty pages and how to defragment data in heap files
+		hp.deleteTuple(t);
+		hp.markDirty(true, tid);
+		return hp;
     }
     
     public class HeapFileIterator implements DbFileIterator {
@@ -124,37 +153,45 @@ public class HeapFile implements DbFile {
 				HeapPageId pId = new HeapPageId(tableId, 0);
 				hp = (HeapPage) Database.getBufferPool().getPage(tid, pId, null);
 				it = hp.iterator();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 				System.exit(1);
 			}
 		}
 
 		@Override
-		public boolean hasNext() throws DbException, TransactionAbortedException {
+		public boolean hasNext() {
 			if(hp == null)
 				return false;
-			return it.hasNext() || hp.pid.pageno() < hf.numPages() - 1;
+
+			if(it.hasNext())
+				return true;
+
+			while(hp.pid.pageno() < hf.numPages() - 1) {
+				try {
+					HeapPageId pId = new HeapPageId(tableId, hp.pid.pageno()+1);
+					hp = (HeapPage) Database.getBufferPool().getPage(tid, pId, null);
+					it = hp.iterator();
+					if(it.hasNext())
+						return true;
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+			}
+
+			return false;
 		}
 
 		@Override
-		public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
+		public Tuple next() throws NoSuchElementException {
 			if(this.hasNext() ==  false)
 				throw new NoSuchElementException();
 
 			if(it.hasNext())
 				return it.next();
-
-			try {
-				HeapPageId pId = new HeapPageId(tableId, hp.pid.pageno()+1);
-				hp = (HeapPage) Database.getBufferPool().getPage(tid, pId, null);
-				it = hp.iterator();
-				return it.next();
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-			return null;
+			else
+				return null;
 		}
 
 		@Override

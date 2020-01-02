@@ -3,6 +3,9 @@ package simpledb;
 /** Predicate compares tuples to a specified Field value.
  */
 public class Predicate {
+    private int field;
+    private Op op;
+    private Field operand;
 
     /** Constants used for return codes in Field.compare */
     public enum Op {
@@ -37,7 +40,9 @@ public class Predicate {
      * @param operand field value to compare passed in tuples to
      */
     public Predicate(int field, Op op, Field operand) {
-        // some code goes here
+        this.field = field;
+        this.op = op;
+        this.operand = operand;
     }
 
     /**
@@ -50,8 +55,7 @@ public class Predicate {
      * @return true if the comparison is true, false otherwise.
      */
     public boolean filter(Tuple t) {
-        // some code goes here
-        return false;
+        return t.getField(field).compare(op, operand);
     }
 
     /**
@@ -59,7 +63,6 @@ public class Predicate {
      * "f = field_id op = op_string operand = operand_string
      */
     public String toString() {
-        // some code goes here
-        return "";
+        return String.format("field_id = %d, op = %d, operand = %s", field, op, operand);
     }
 }

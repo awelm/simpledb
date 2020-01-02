@@ -5,6 +5,10 @@ import java.util.*;
  * The Join operator implements the relational join operation.
  */
 public class Join extends AbstractDbIterator {
+    private JoinPredicate jp;
+    private DbIterator child1;
+    private DbIterator child2;
+    private Tuple currOuterTuple;
 
     /**
      * Constructor.  Accepts to children to join and the predicate
@@ -15,28 +19,39 @@ public class Join extends AbstractDbIterator {
      * @param child2 Iterator for the right(inner) relation to join
      */
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
-        // some code goes here
+        this.jp = p;
+        this.child1 = child1;
+        this.child2 = child2;
     }
 
     /**
      * @see simpledb.TupleDesc#combine(TupleDesc, TupleDesc) for possible implementation logic.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return TupleDesc.combine(child1.getTupleDesc(), child2.getTupleDesc());
     }
 
     public void open()
         throws DbException, NoSuchElementException, TransactionAbortedException {
-        // some code goes here
+        child1.open();
+        child2.open();
+        if(child1.hasNext())
+            currOuterTuple = child1.next();
     }
 
     public void close() {
-        // some code goes here
+        currOuterTuple = null;
+        child1.close();
+        child2.close();
+        super.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        currOuterTuple = null;
+        child1.rewind();
+        child2.rewind();
+        if(child1.hasNext())
+            currOuterTuple = child1.next();
     }
 
     /**
@@ -59,7 +74,17 @@ public class Join extends AbstractDbIterator {
      * @see JoinPredicate#filter
      */
     protected Tuple readNext() throws TransactionAbortedException, DbException {
-        // some code goes here
+        while(currOuterTuple != null) {
+            while(child2.hasNext()) {
+                Tuple rightTuple = child2.next();
+                if(jp.filter(currOuterTuple, rightTuple))
+                    return Tuple.combine(currOuterTuple, rightTuple);
+            }
+            if(!child1.hasNext())
+                return null;
+            currOuterTuple = child1.next();
+            child2.rewind();
+        }
         return null;
     }
 }

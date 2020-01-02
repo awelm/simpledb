@@ -20,7 +20,7 @@ public class TupleDesc {
      * @throws Exception 
      */	
 	
-    public static TupleDesc combine(TupleDesc td1, TupleDesc td2) throws Exception {
+    public static TupleDesc combine(TupleDesc td1, TupleDesc td2) {
     	int newTdNumFields = td1.numFields() + td2.numFields();
     	Type[] newTdTypeAr = new Type[newTdNumFields];
     	

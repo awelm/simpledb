@@ -1,6 +1,5 @@
 package simpledb;
 
-
 import java.util.NoSuchElementException;
 
 /**
@@ -13,6 +12,20 @@ public class Tuple {
 	private TupleDesc td;
 	private RecordId rId;
 	private Field[] fields;
+
+    public static Tuple combine(Tuple t1, Tuple t2) {
+        TupleDesc newTd = TupleDesc.combine(t1.getTupleDesc(), t2.getTupleDesc());
+        Tuple newT = new Tuple(newTd);
+        int fieldOneCount = t1.getTupleDesc().numFields();
+        int fieldTwoCount = t2.getTupleDesc().numFields();
+
+        for(int x=0; x<fieldOneCount; x++)
+            newT.setField(x, t1.getField(x));
+        for(int x=fieldOneCount; x < fieldOneCount + fieldTwoCount; x++)
+            newT.setField(x, t2.getField(x-fieldOneCount));
+
+        return newT;
+    }
 
     /**
      * Create a new tuple with the specified schema (type).

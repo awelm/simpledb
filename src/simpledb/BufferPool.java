@@ -1,5 +1,6 @@
 package simpledb;
 
+import javax.xml.crypto.Data;
 import java.io.*;
 import java.util.HashMap;
 
@@ -51,7 +52,7 @@ public class BufferPool {
 	 * @throws IOException 
 	 */
 	public Page getPage(TransactionId tid, PageId pid, Permissions perm)
-			throws TransactionAbortedException, DbException, IOException {
+			throws TransactionAbortedException, DbException{
 		if(idToPage.containsKey(pid))
 			return idToPage.get(pid);
 		else if(idToPage.size() >= numPages)
@@ -59,7 +60,7 @@ public class BufferPool {
 		else {
 			try {
 				DbFile dbf = Database.getCatalog().getDbFile(pid.getTableId());
-				Page fetchedPage = dbf.readPage(pid); 
+				Page fetchedPage = dbf.readPage(pid);
 				idToPage.put(pid, fetchedPage);
 				return fetchedPage;
 			} catch (Exception e) {
@@ -126,9 +127,14 @@ public class BufferPool {
 	 * @param t       the tuple to add
 	 */
 	public void insertTuple(TransactionId tid, int tableId, Tuple t)
-			throws DbException, IOException, TransactionAbortedException {
-		// some code goes here
-		// not necessary for lab1
+			throws DbException, TransactionAbortedException {
+	    HeapFile hf = (HeapFile) Database.getCatalog().getDbFile(tableId);
+	    try {
+	    	hf.addTuple(tid, t);
+		} catch (IOException ioe) {
+	    	ioe.printStackTrace();
+	    	System.exit(1);
+		}
 	}
 
 	/**
@@ -144,8 +150,8 @@ public class BufferPool {
 	 * @param t   the tuple to add
 	 */
 	public void deleteTuple(TransactionId tid, Tuple t) throws DbException, TransactionAbortedException {
-		// some code goes here
-		// not necessary for lab1
+		HeapPage hp = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), null);
+		hp.deleteTuple(t);
 	}
 
 	/**

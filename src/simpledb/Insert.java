@@ -1,4 +1,5 @@
 package simpledb;
+import javax.xml.crypto.Data;
 import java.util.*;
 
 /**
@@ -6,34 +7,43 @@ import java.util.*;
  * the tableid specified in the constructor
  */
 public class Insert extends AbstractDbIterator {
+    private TransactionId tid;
+    private DbIterator child;
+    private int tableid;
+    private TupleDesc td;
+    private boolean readNextCalled;
 
     /**
      * Constructor.
-     * @param t The transaction running the insert.
+     * @param tid The transaction running the insert.
      * @param child The child operator from which to read tuples to be inserted.
      * @param tableid The table in which to insert tuples.
      * @throws DbException if TupleDesc of child differs from table into which we are to insert.
      */
-    public Insert(TransactionId t, DbIterator child, int tableid)
+    public Insert(TransactionId tid, DbIterator child, int tableid)
         throws DbException {
-        // some code goes here
+        this.tid = tid;
+        this.child = child;
+        this.tableid = tableid;
+        this.td = new TupleDesc(new Type[]{Type.INT_TYPE}, new String[]{"affected_rows"});
+        this.readNextCalled = false;
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return td;
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        // some code goes here
+        child.open();
     }
 
     public void close() {
-        // some code goes here
+        child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        child.rewind();
+        readNextCalled = false;
     }
 
     /**
@@ -51,7 +61,19 @@ public class Insert extends AbstractDbIterator {
      */
     protected Tuple readNext()
             throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        if(readNextCalled)
+            return null;
+        readNextCalled = true;
+
+        BufferPool bp = Database.getBufferPool();
+        int insertCount = 0;
+        while(child.hasNext()) {
+            bp.insertTuple(tid, tableid, child.next());
+            insertCount++;
+        }
+
+        Tuple retTuple = new Tuple(td);
+        retTuple.setField(0, new IntField(insertCount));
+        return retTuple;
     }
 }

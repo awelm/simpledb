@@ -29,14 +29,16 @@ public class SeqScan implements DbIterator {
         this.tid = tid;
         this.tableId = tableid;
         this.tableAlias= tableAlias;
+
+        tableFile = Database.getCatalog().getDbFile(tableId);
+        if (tableFile == null) {
+            System.err.printf("Could not find table file with ID %d", tableFile.getId());
+            System.exit(1);
+        }
     }
 
     public void open()
         throws DbException, TransactionAbortedException {
-        tableFile = Database.getCatalog().getDbFile(tableId);
-        if (tableFile == null) {
-            throw new DbException("Could not find table file");
-        }
         fileIterator = tableFile.iterator(tid);
         fileIterator.open();
     }
