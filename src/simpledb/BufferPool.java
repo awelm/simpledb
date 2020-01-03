@@ -51,7 +51,7 @@ public class BufferPool {
 	 */
 	public BufferPool(int nPages) {
 		numPages = nPages;
-		idToPageLRU = new LRUMap<>(nPages);
+		idToPageLRU = new LRUMap<PageId, Page>(nPages);
 	}
 
 	/**
@@ -174,7 +174,7 @@ public class BufferPool {
 	 * dirty data to disk so will break simpledb if running in NO STEAL mode.
 	 */
 	public synchronized void flushAllPages() throws IOException {
-		Set<PageId> pids = new HashSet<>(idToPageLRU.keySet());
+		Set<PageId> pids = new HashSet<PageId>(idToPageLRU.keySet());
 		for(PageId pid : pids) {
 			flushPage(pid);
 		}

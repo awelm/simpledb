@@ -345,7 +345,7 @@ public class HeapPage implements Page {
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> iterator() {
-    	ArrayList<Tuple> iteratorList = new ArrayList<>();
+    	ArrayList<Tuple> iteratorList = new ArrayList<Tuple>();
     	for(int x=0; x<tuples.length; x++)
     	    if(getSlot(x) && tuples[x] != null)
     	        iteratorList.add(tuples[x]);

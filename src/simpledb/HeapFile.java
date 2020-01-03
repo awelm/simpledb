@@ -111,7 +111,7 @@ public class HeapFile implements DbFile {
         	if(hp.getNumEmptySlots() > 0) {
         		hp.addTuple(t);
 				hp.markDirty(true, tid);
-        		return new ArrayList<>(Arrays.asList(new Page[] {hp}));
+        		return new ArrayList<Page>(Arrays.asList(new Page[] {hp}));
 			}
 		}
 
@@ -120,7 +120,7 @@ public class HeapFile implements DbFile {
 		HeapPage newPage = new HeapPage(newPageId, new byte[BufferPool.PAGE_SIZE]);
 		newPage.addTuple(t);
 		writePage(newPage);
-		return new ArrayList<>(Arrays.asList(new Page[] {newPage}));
+		return new ArrayList<Page>(Arrays.asList(new Page[] {newPage}));
     }
 
 

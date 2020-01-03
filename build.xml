@@ -37,8 +37,8 @@
         <sequential>
             <mkdir dir="@{destdir}"/>
             <!-- avoids needing ant clean when changing interfaces -->
-            <depend srcdir="${srcdir}" destdir="${destdir}" cache="${depcache}"/>
-            <javac srcdir="@{srcdir}" destdir="@{destdir}" includeAntRuntime="no"
+            <depend srcdir="src" destdir="${destdir}" cache="${depcache}"/>
+            <javac srcdir="src" destdir="@{destdir}" includeAntRuntime="no"
                     debug="${compile.debug}" source="${sourceversion}">
                 <compilerarg value="-Xlint:unchecked" />
                 <!--<compilerarg value="-Xlint:deprecation" />-->

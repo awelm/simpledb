@@ -27,9 +27,9 @@ public class IntAggregator implements Aggregator {
         this.gbfieldtype = gbfieldtype;
         this.afield = afield;
         this.what = what;
-        this.groupValToAgg = new HashMap<>();
+        this.groupValToAgg = new HashMap<Field, Integer>();
         if (what == Op.AVG)
-            this.groupValToCount = new HashMap<>();
+            this.groupValToCount = new HashMap<Field, Integer>();
     }
 
     private int getInitValueForOp(Op what) {

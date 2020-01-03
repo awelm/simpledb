@@ -32,7 +32,7 @@ public class StringAggregator implements Aggregator {
         this.gbfieldtype = gbfieldtype;
         this.afield = afield;
         this.what = what;
-        groupValToCount = new HashMap<>();
+        groupValToCount = new HashMap<Field, Integer>();
     }
 
     /**
