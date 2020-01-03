@@ -1,0 +1,2 @@
+tableA (fOne int, fTwo int)
+tableB (fOne int, fTwo int)
