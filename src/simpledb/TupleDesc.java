@@ -114,6 +114,12 @@ public class TupleDesc {
     public int nameToId(String name) throws NoSuchElementException {
     	if(name == null || fieldAr == null)
     		throw new NoSuchElementException();
+
+    	// adding this to remove table name prefixing that parser adds to the fields
+        int dotIndex = name.indexOf('.');
+        if(dotIndex != -1)
+        	name = name.substring(dotIndex+1);
+
     	for(int x=0; x<fieldAr.length; x++)
     		if(name.equals(fieldAr[x]))
     			return x;
