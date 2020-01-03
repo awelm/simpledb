@@ -99,11 +99,7 @@ public class IntAggregator implements Aggregator {
 
         public IntAggregatorIterator(IntAggregator intAgg) {
             this.intAgg = intAgg;
-
-            if (intAgg.gbfield == NO_GROUPING)
-                this.td = new TupleDesc(new Type[]{Type.INT_TYPE});
-            else
-                this.td = new TupleDesc(new Type[]{intAgg.gbfieldtype, Type.INT_TYPE});
+            this.td = Aggregate.createAggregateTupleDesc(intAgg.gbfieldtype, null, null);
         }
 
         public TupleDesc getTupleDesc() {

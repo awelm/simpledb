@@ -57,8 +57,6 @@ public class TupleDesc {
     	try {
 			if(typeAr.length < 1)
 				throw new Exception("Must provide at least one field type");
-			if(typeAr.length != fieldAr.length)
-				throw new Exception("Type array and field name array have different sizes");
 			this.typeAr = typeAr.clone();
 			this.fieldAr = fieldAr.clone();
 		} catch (Exception e) {

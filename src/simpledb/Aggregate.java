@@ -11,9 +11,11 @@ public class Aggregate extends AbstractDbIterator {
     private DbIterator child;
     private int afield;
     private int gfield;
+    private Type gbFieldType;
     private Aggregator.Op aop;
     private Aggregator aggregator;
     private DbIterator aggregatorIterator;
+    private TupleDesc td;
 
     /**
      * Constructor.
@@ -32,15 +34,15 @@ public class Aggregate extends AbstractDbIterator {
         this.gfield = gfield;
         this.aop = aop;
 
-        Type groupType = gfield != Aggregator.NO_GROUPING ? child.getTupleDesc().getType(gfield) : null;
+        gbFieldType = gfield != Aggregator.NO_GROUPING ? child.getTupleDesc().getType(gfield) : null;
         Type aggType = child.getTupleDesc().getType(afield);
 
         switch (aggType) {
             case INT_TYPE:
-                aggregator = new IntAggregator(gfield, groupType, afield, this.aop);
+                aggregator = new IntAggregator(gfield, gbFieldType, afield, this.aop);
                 break;
             case STRING_TYPE:
-                aggregator = new StringAggregator(gfield, groupType, afield, this.aop);
+                aggregator = new StringAggregator(gfield, gbFieldType, afield, this.aop);
                 break;
             default:
                 System.err.printf("Unsupported type %s", aggType);
@@ -64,6 +66,22 @@ public class Aggregate extends AbstractDbIterator {
                 return "count";
         }
         return "";
+    }
+
+    public static TupleDesc createAggregateTupleDesc(Type gbFieldType, String aggColumnName, String gbColumnName) {
+        String[] fieldNames;
+        Type[] fieldTypes;
+
+        if(gbFieldType == null) {
+            fieldTypes = new Type[] {Type.INT_TYPE};
+            fieldNames = new String[] {aggColumnName};
+        }
+        else {
+            fieldTypes = new Type[] {gbFieldType, Type.INT_TYPE};
+            fieldNames = new String[] {gbColumnName, aggColumnName};
+        }
+
+        return new TupleDesc(fieldTypes, fieldNames);
     }
 
     public void open()
@@ -107,7 +125,14 @@ public class Aggregate extends AbstractDbIterator {
      * of the child iterator.
      */
     public TupleDesc getTupleDesc() {
-        return aggregatorIterator.getTupleDesc();
+        if(td != null)
+            return td;
+
+        TupleDesc childTd = child.getTupleDesc();
+        String aggColumnName = String.format("%s(%s)", aggName(aop), childTd.getFieldName(afield));
+        String groupByColumnName = gfield != Aggregator.NO_GROUPING ? childTd.getFieldName(gfield) : null;
+        td = createAggregateTupleDesc(gbFieldType, aggColumnName, groupByColumnName);
+        return td;
     }
 
     public void close() {

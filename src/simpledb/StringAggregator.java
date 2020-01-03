@@ -54,11 +54,7 @@ public class StringAggregator implements Aggregator {
 
         public StringAggregatorIterator(StringAggregator stringAgg) {
             this.stringAgg = stringAgg;
-
-            if (stringAgg.gbfield == NO_GROUPING)
-                this.td = new TupleDesc(new Type[]{Type.INT_TYPE});
-            else
-                this.td = new TupleDesc(new Type[]{stringAgg.gbfieldtype, Type.INT_TYPE});
+            this.td = Aggregate.createAggregateTupleDesc(stringAgg.gbfieldtype, null, null);
         }
 
         public TupleDesc getTupleDesc() {
