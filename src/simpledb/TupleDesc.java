@@ -99,8 +99,10 @@ public class TupleDesc {
      * @throws NoSuchElementException if i is not a valid field reference.
      */
     public String getFieldName(int i) throws NoSuchElementException {
-    	if (i >= this.numFields() || this.fieldAr == null)
+    	if (i >= this.numFields())
     		throw new NoSuchElementException();
+    	if(fieldAr == null)
+    		return null;
     	return this.fieldAr[i];
     }
 
