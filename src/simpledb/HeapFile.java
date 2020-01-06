@@ -104,30 +104,39 @@ public class HeapFile implements DbFile {
         throws DbException, IOException, TransactionAbortedException {
         int numPages = this.numPages();
         int tableId = getId();
+        BufferPool bp = Database.getBufferPool();
         for(int p=0; p<numPages; p++) {
 			HeapPageId pId = new HeapPageId(tableId, p);
 			//TODO: maintain a free space list in order to avoid iterating through all pages
-        	HeapPage hp = (HeapPage) Database.getBufferPool().getPage(tid, pId, null);
+        	HeapPage hp = (HeapPage) bp.getPage(tid, pId, Permissions.READ_ONLY);
         	if(hp.getNumEmptySlots() > 0) {
-        		hp.addTuple(t);
+        		// if there is space on this page, acquire write lock before inserting tuple into the page
+				hp = (HeapPage) bp.getPage(tid, pId, Permissions.READ_WRITE);
+				hp.addTuple(t);
 				hp.markDirty(true, tid);
         		return new ArrayList<Page>(Arrays.asList(new Page[] {hp}));
 			}
+			// optimization: we can release page lock early since we did not actually look at the page's data
+			bp.releasePage(tid, pId);
 		}
 
-        // create new page if no space in previous pages
-		HeapPageId newPageId = new HeapPageId(tableId, numPages);
-		HeapPage newPage = new HeapPage(newPageId, new byte[BufferPool.PAGE_SIZE]);
-		newPage.addTuple(t);
-		writePage(newPage);
-		return new ArrayList<Page>(Arrays.asList(new Page[] {newPage}));
+        // create new page if no space in previous pages. Prevent race condition where 2 new pages with the same
+		// page number are created, resulting in the first new page being overwritten by the second page
+        synchronized (Database.getCatalog()) {
+        	int synchronizedNumPages = this.numPages();
+			HeapPageId newPageId = new HeapPageId(tableId, synchronizedNumPages);
+			HeapPage newPage = new HeapPage(newPageId, new byte[BufferPool.PAGE_SIZE]);
+			newPage.addTuple(t);
+			writePage(newPage);
+			return new ArrayList<Page>(Arrays.asList(new Page[] {newPage}));
+		}
     }
 
 
     // see DbFile.java for javadocs
     public Page deleteTuple(TransactionId tid, Tuple t)
         throws DbException, TransactionAbortedException {
-		HeapPage hp = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), null);
+		HeapPage hp = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
 		//TODO: Figure out how to garbage collect empty pages and how to defragment data in heap files
 		hp.deleteTuple(t);
 		hp.markDirty(true, tid);
@@ -149,14 +158,9 @@ public class HeapFile implements DbFile {
 
 		@Override
 		public void open() throws DbException, TransactionAbortedException {
-			try {
-				HeapPageId pId = new HeapPageId(tableId, 0);
-				hp = (HeapPage) Database.getBufferPool().getPage(tid, pId, null);
-				it = hp.iterator();
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
+    		HeapPageId pId = new HeapPageId(tableId, 0);
+    		hp = (HeapPage) Database.getBufferPool().getPage(tid, pId, null);
+    		it = hp.iterator();
 		}
 
 		@Override
@@ -170,7 +174,7 @@ public class HeapFile implements DbFile {
 			while(hp.pid.pageno() < hf.numPages() - 1) {
 				try {
 					HeapPageId pId = new HeapPageId(tableId, hp.pid.pageno()+1);
-					hp = (HeapPage) Database.getBufferPool().getPage(tid, pId, null);
+					hp = (HeapPage) Database.getBufferPool().getPage(tid, pId, Permissions.READ_ONLY);
 					it = hp.iterator();
 					if(it.hasNext())
 						return true;

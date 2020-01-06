@@ -20,6 +20,14 @@ public class Permissions {
     return "UNKNOWN";
   }
 
+  public boolean isReadWrite() {
+    return permLevel == 1;
+  }
+
+  public boolean isReadOnly() {
+    return permLevel == 0;
+  }
+
   public static final Permissions READ_ONLY = new Permissions(0);
   public static final Permissions READ_WRITE = new Permissions(1);
 
