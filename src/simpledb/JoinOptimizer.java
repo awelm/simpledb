@@ -165,7 +165,8 @@ public class JoinOptimizer {
                                               HashMap<String, Double> filterSelectivities,  
                                               boolean explain) throws ParsingException 
     {
-        //Not necessary for labs 1--3
+
+        // See the Lab 4 writeup for some hints as to how this function should work.
 
         // some code goes here
         //Replace the following

@@ -73,6 +73,7 @@ public class IntAggregatorTest extends SimpleDbTestBase {
     for (int[] step : sum) {
       agg.merge(scan1.next());
       DbIterator it = agg.iterator();
+      it.open();
       TestUtil.matchAllTuples(TestUtil.createTupleList(width1, step), it);
     }
   }
@@ -88,6 +89,7 @@ public class IntAggregatorTest extends SimpleDbTestBase {
     for (int[] step : min) {
       agg.merge(scan1.next());
       it = agg.iterator();
+      it.open();
       TestUtil.matchAllTuples(TestUtil.createTupleList(width1, step), it);
     }
   }
@@ -103,6 +105,7 @@ public class IntAggregatorTest extends SimpleDbTestBase {
     for (int[] step : max) {
       agg.merge(scan1.next());
       it = agg.iterator();
+      it.open();
       TestUtil.matchAllTuples(TestUtil.createTupleList(width1, step), it);
     }
   }
@@ -118,6 +121,7 @@ public class IntAggregatorTest extends SimpleDbTestBase {
     for (int[] step : avg) {
       agg.merge(scan1.next());
       it = agg.iterator();
+      it.open();
       TestUtil.matchAllTuples(TestUtil.createTupleList(width1, step), it);
     }
   }

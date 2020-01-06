@@ -57,7 +57,7 @@ public class Utility {
      * @return a Tuple with an IntField for every element of tupdata
      *   and RecordId(HeapPageId(1, 2), 3)
      */
-    public static Tuple getHeapTuple(int[] tupdata) throws Exception{
+    public static Tuple getHeapTuple(int[] tupdata) {
         Tuple tup = new Tuple(getTupleDesc(tupdata.length));
         tup.setRecordId(new RecordId(new HeapPageId(1, 2), 3));
         for (int i = 0; i < tupdata.length; ++i)
@@ -69,7 +69,7 @@ public class Utility {
      * @return a Tuple with a 'width' IntFields each with value n and
      *   with RecordId(HeapPageId(1, 2), 3)
      */
-    public static Tuple getHeapTuple(int n, int width) throws Exception{
+    public static Tuple getHeapTuple(int n, int width) {
         Tuple tup = new Tuple(getTupleDesc(width));
         tup.setRecordId(new RecordId(new HeapPageId(1, 2), 3));
         for (int i = 0; i < width; ++i)
@@ -83,7 +83,7 @@ public class Utility {
      *         do not set it's RecordId, hence do not distinguish which
      *         sort of file it belongs to.
      */
-    public static Tuple getTuple(int[] tupledata, int width) throws Exception{
+    public static Tuple getTuple(int[] tupledata, int width) {
         if(tupledata.length != width) {
             System.out.println("get Hash Tuple has the wrong length~");
             System.exit(1);

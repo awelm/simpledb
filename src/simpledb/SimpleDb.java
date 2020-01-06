@@ -51,6 +51,7 @@ public class SimpleDb {
                it.open();
                while (it.hasNext()) {
                   Tuple t = it.next();
+                  System.out.println(t);
                }
                it.close();
             }
@@ -69,8 +70,12 @@ public class SimpleDb {
                 
                 java.lang.reflect.Method m = c.getMethod("main", s);
                 m.invoke(null, (java.lang.Object)newargs);
-            } catch (Exception e) {
+            } catch (ClassNotFoundException cne) {
                 System.out.println("Class Parser not found -- perhaps you are trying to run the parser as a part of lab1?");
+            }
+            catch (Exception e) {
+                System.out.println("Error in parser.");
+                e.printStackTrace();
             }
 
         }

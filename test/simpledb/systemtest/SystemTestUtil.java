@@ -46,7 +46,7 @@ public class SystemTestUtil {
     public static HeapFile createRandomHeapFile(
             int columns, int rows, int maxValue, Map<Integer, Integer> columnSpecification,
             ArrayList<ArrayList<Integer>> tuples, String colPrefix)
-            throws IOException, DbException, TransactionAbortedException{
+            throws IOException, DbException, TransactionAbortedException {
         File temp = createRandomHeapFileUnopened(columns, rows, maxValue,
                 columnSpecification, tuples);
         return Utility.openHeapFile(columns, colPrefix, temp);
