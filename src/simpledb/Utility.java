@@ -2,6 +2,7 @@ package simpledb;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 
 /** Helper methods used for testing and implementing random features. */
@@ -137,11 +138,14 @@ public class Utility {
         return hf;
     }
     
-    public static HeapFile openHeapFile(int cols, String colPrefix, File f) {
+    public static HeapFile openHeapFile(int cols, String colPrefix, File f, HashMap<String, TableStats> stats) {
         // create the HeapFile and add it to the catalog
     	TupleDesc td = getTupleDesc(cols, colPrefix);
         HeapFile hf = new HeapFile(f, td);
-        Database.getCatalog().addTable(hf, UUID.randomUUID().toString());
+        String tableName = UUID.randomUUID().toString();
+        Database.getCatalog().addTable(hf, tableName);
+        if(stats != null)
+            stats.put(tableName, new TableStats(Database.getCatalog().getTableId(tableName), 1000));
         return hf;
     }
 

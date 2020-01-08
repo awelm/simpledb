@@ -38,7 +38,7 @@ public class QueryTest {
         File temp = File.createTempFile("table", ".dat");
         temp.deleteOnExit();
         HeapFileEncoder.convert(tuples, temp, BufferPool.PAGE_SIZE, columns);
-        return Utility.openHeapFile(columns, colPrefix, temp);
+        return Utility.openHeapFile(columns, colPrefix, temp, null);
 	}
 	
 	@Test(timeout=20000) public void queryTest() throws IOException, DbException, TransactionAbortedException {
@@ -53,22 +53,23 @@ public class QueryTest {
 		
 		// Create all of the tables, and add them to the catalog
 		ArrayList<ArrayList<Integer>> empTuples = new ArrayList<ArrayList<Integer>>();
-		HeapFile emp = SystemTestUtil.createRandomHeapFile(6, 100000, null, empTuples, "c");	
+		HeapFile emp = SystemTestUtil.createRandomHeapFile(6, 100000, null, empTuples, "c", stats);
 		Database.getCatalog().addTable(emp, "emp");
 		
 		ArrayList<ArrayList<Integer>> deptTuples = new ArrayList<ArrayList<Integer>>();
-		HeapFile dept = SystemTestUtil.createRandomHeapFile(3, 1000, null, deptTuples, "c");	
+		HeapFile dept = SystemTestUtil.createRandomHeapFile(3, 1000, null, deptTuples, "c", stats);
 		Database.getCatalog().addTable(dept, "dept");
 		
 		ArrayList<ArrayList<Integer>> hobbyTuples = new ArrayList<ArrayList<Integer>>();
-		HeapFile hobby = SystemTestUtil.createRandomHeapFile(6, 1000, null, hobbyTuples, "c");
+		HeapFile hobby = SystemTestUtil.createRandomHeapFile(6, 1000, null, hobbyTuples, "c", stats);
 		Database.getCatalog().addTable(hobby, "hobby");
 		
 		ArrayList<ArrayList<Integer>> hobbiesTuples = new ArrayList<ArrayList<Integer>>();
-		HeapFile hobbies = SystemTestUtil.createRandomHeapFile(2, 200000, null, hobbiesTuples, "c");
+		HeapFile hobbies = SystemTestUtil.createRandomHeapFile(2, 200000, null, hobbiesTuples, "c", stats);
 		Database.getCatalog().addTable(hobbies, "hobbies");
 		
 		// Get TableStats objects for each of the tables that we just generated.
+        //FIX TEST AND ADD STATS HERE
 		stats.put("emp", new TableStats(Database.getCatalog().getTableId("emp"), IO_COST));
 		stats.put("dept", new TableStats(Database.getCatalog().getTableId("dept"), IO_COST));
 		stats.put("hobby", new TableStats(Database.getCatalog().getTableId("hobby"), IO_COST));

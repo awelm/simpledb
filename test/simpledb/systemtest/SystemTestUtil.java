@@ -2,11 +2,7 @@ package simpledb.systemtest;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 import org.junit.Assert;
 
@@ -38,18 +34,18 @@ public class SystemTestUtil {
     
     public static HeapFile createRandomHeapFile(
             int columns, int rows, Map<Integer, Integer> columnSpecification,
-            ArrayList<ArrayList<Integer>> tuples, String colPrefix)
+            ArrayList<ArrayList<Integer>> tuples, String colPrefix, HashMap<String, TableStats> stats)
             throws IOException, DbException, TransactionAbortedException {
-        return createRandomHeapFile(columns, rows, MAX_RAND_VALUE, columnSpecification, tuples, colPrefix);
+        return createRandomHeapFile(columns, rows, MAX_RAND_VALUE, columnSpecification, tuples, colPrefix, stats);
     }
     
     public static HeapFile createRandomHeapFile(
             int columns, int rows, int maxValue, Map<Integer, Integer> columnSpecification,
-            ArrayList<ArrayList<Integer>> tuples, String colPrefix)
+            ArrayList<ArrayList<Integer>> tuples, String colPrefix, HashMap<String, TableStats> stats)
             throws IOException, DbException, TransactionAbortedException {
         File temp = createRandomHeapFileUnopened(columns, rows, maxValue,
                 columnSpecification, tuples);
-        return Utility.openHeapFile(columns, colPrefix, temp);
+        return Utility.openHeapFile(columns, colPrefix, temp, stats);
     }
 
     public static File createRandomHeapFileUnopened(int columns, int rows,

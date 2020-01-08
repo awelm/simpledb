@@ -1,4 +1,6 @@
 package simpledb;
+import sun.rmi.runtime.Log;
+
 import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -75,20 +77,19 @@ public class JoinOptimizer {
      * @param j A LogicalJoinNode representing the join operation being performed.
      * @param card1 Estimated cardinality of the left-hand side of the query
      * @param card2 Estimated cardinality of the right-hand side of the query
-     * @param cost1 Estimated cost of one full scan of the table on the left-hand side of the query
-     * @param cost2 Estimated cost of one full scan of the table on the right-hand side of the query
+     * @param scanCost1 Estimated cost of one full scan of the table on the left-hand side of the query
+     * @param scanCost2 Estimated cost of one full scan of the table on the right-hand side of the query
      * @return An estimate of the cost of this query, in terms of cost1 and cost2
      */
-    public double estimateJoinCost(LogicalJoinNode j, int card1, int card2, double cost1, double cost2) {
+    public double estimateJoinCost(LogicalJoinNode j, int card1, int card2, double scanCost1, double scanCost2) {
         if (j instanceof LogicalSubplanJoinNode) {
         	// A LogicalSubplanJoinNode represents a subquery.
         	// You do not need to implement proper support for these for Lab 4.
-        	return card1 + cost1 + cost2;
+        	return card1 + scanCost1 + scanCost2;
         } else {
-            // Insert your code here.
-            // HINT:  You may need to use the variable "j" if you implemented a join
-            //        algorithm that's more complicated than a basic nested-loops join.
-            return -1.0;
+            //TODO: consider hashjoin cost as well
+            return scanCost1 + card1 * scanCost2 // IO cost
+                    + card1 * card2; // CPU cost
         }
     }
 
@@ -110,8 +111,30 @@ public class JoinOptimizer {
             // You do not need to implement proper support for these for Lab 4.
             return card1;
         } else {
-            // some code goes here
-            return -1;
+           switch(j.p) {
+               case LIKE: // For now, pretend that 'like' and 'equals' have the same cost
+               case EQUALS:
+               case NOT_EQUALS:
+                   int equalsCardinality;
+                   if(t1pkey && t2pkey)
+                       equalsCardinality = Math.min(card1, card2);
+                   else if(t1pkey)
+                       equalsCardinality = card2;
+                   else if(t2pkey)
+                       equalsCardinality = card1;
+                   else
+                       equalsCardinality = Math.max(card1, card2); //TODO: improve this estimation by using histogram
+
+                   return p.equals(Predicate.Op.NOT_EQUALS) ? card1*card2 - equalsCardinality : equalsCardinality;
+               case GREATER_THAN:
+               case GREATER_THAN_OR_EQ:
+               case LESS_THAN:
+               case LESS_THAN_OR_EQ:
+                   // For now, simply assume 30% fraction of the cross product is emitted
+                   return (int) (card1 * card2 * 0.3); //TODO: improve this cardinality estimation by using histogram
+               default:
+                   return -1;
+           }
         }
     }
 
@@ -165,13 +188,39 @@ public class JoinOptimizer {
                                               HashMap<String, Double> filterSelectivities,  
                                               boolean explain) throws ParsingException 
     {
+        PlanCache pc = new PlanCache();
 
-        // See the Lab 4 writeup for some hints as to how this function should work.
+        // use dynamic programming to compute the optimal join plans
+        int numJoins = joins.size();
+        for(int subsetLen=1; subsetLen<=numJoins; subsetLen++) {
+           Set<Set<LogicalJoinNode>> currSubsets = enumerateSubsets(joins, subsetLen);
+           for(Set<LogicalJoinNode> subset : currSubsets) {
+               //for each given subset, find the best way to compute it
+               CostCard bestPlan = null;
+               for(LogicalJoinNode joinToRemove : subset) {
+                   CostCard currPlan = computeCostAndCardOfSubplan(
+                           stats,
+                           filterSelectivities,
+                           joinToRemove,
+                           subset,
+                           bestPlan != null ? bestPlan.cost : Double.POSITIVE_INFINITY,
+                           pc
+                   );
+                   if(bestPlan == null || (currPlan != null && currPlan.cost < bestPlan.cost))
+                       bestPlan = currPlan;
+               }
+               if(bestPlan != null)
+                   pc.addPlan(subset, bestPlan.cost, bestPlan.card, bestPlan.plan);
+           }
+        }
 
-        // some code goes here
-        //Replace the following
-        return joins;
-    } 
+        Vector<LogicalJoinNode> optimalOrdering = pc.getOrder(new HashSet<LogicalJoinNode>(joins));
+
+        if(explain)
+            printJoins(optimalOrdering, pc, stats, filterSelectivities);
+
+        return optimalOrdering;
+    }
  
     //===================== Private Methods =================================
 

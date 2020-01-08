@@ -333,46 +333,47 @@ public  class LogicalPlan {
 
         joins = jo.orderJoins(statsMap,filterSelectivities,explain);
 
-        Iterator<LogicalJoinNode> joinIt = joins.iterator();
-        while (joinIt.hasNext()) {
-            LogicalJoinNode lj = joinIt.next();
-            DbIterator plan1;
-            DbIterator plan2;
-            boolean isSubqueryJoin = lj instanceof LogicalSubplanJoinNode;
-            String t1name, t2name;
+        if(joins != null) {
+            Iterator<LogicalJoinNode> joinIt = joins.iterator();
+            while (joinIt.hasNext()) {
+                LogicalJoinNode lj = joinIt.next();
+                DbIterator plan1;
+                DbIterator plan2;
+                boolean isSubqueryJoin = lj instanceof LogicalSubplanJoinNode;
+                String t1name, t2name;
 
-            if (equivMap.get(lj.t1)!=null)
-                t1name = equivMap.get(lj.t1);
-            else
-                t1name = lj.t1;
+                if (equivMap.get(lj.t1)!=null)
+                    t1name = equivMap.get(lj.t1);
+                else
+                    t1name = lj.t1;
 
-            if (equivMap.get(lj.t2)!=null)
-                t2name = equivMap.get(lj.t2);
-            else
-                t2name = lj.t2;
+                if (equivMap.get(lj.t2)!=null)
+                    t2name = equivMap.get(lj.t2);
+                else
+                    t2name = lj.t2;
 
-            plan1 = subplanMap.get(t1name);
+                plan1 = subplanMap.get(t1name);
 
-            if (isSubqueryJoin) {
-                plan2 = ((LogicalSubplanJoinNode)lj).subPlan;
-                if (plan2 == null) 
-                    throw new ParsingException("Invalid subquery.");
-            } else { 
-                plan2 = subplanMap.get(t2name);
-            }
-            
-            if (plan1 == null)
-                throw new ParsingException("Unknown table in WHERE clause " + lj.t1);
-            if (plan2 == null)
-                throw new ParsingException("Unknown table in WHERE clause " + lj.t2);
-            
-            DbIterator j;
-            j = jo.instantiateJoin(lj,plan1,plan2, statsMap);
-            subplanMap.put(t1name, j);
+                if (isSubqueryJoin) {
+                    plan2 = ((LogicalSubplanJoinNode)lj).subPlan;
+                    if (plan2 == null)
+                        throw new ParsingException("Invalid subquery.");
+                } else {
+                    plan2 = subplanMap.get(t2name);
+                }
 
-            if (!isSubqueryJoin) {
-                subplanMap.remove(t2name);
-                equivMap.put(t2name,t1name);  //keep track of the fact that this new node contains both tables
+                if (plan1 == null)
+                    throw new ParsingException("Unknown table in WHERE clause " + lj.t1);
+                if (plan2 == null)
+                    throw new ParsingException("Unknown table in WHERE clause " + lj.t2);
+
+                DbIterator j;
+                j = jo.instantiateJoin(lj,plan1,plan2, statsMap);
+                subplanMap.put(t1name, j);
+
+                if (!isSubqueryJoin) {
+                    subplanMap.remove(t2name);
+                    equivMap.put(t2name,t1name);  //keep track of the fact that this new node contains both tables
                     //make sure anything that was equiv to lj.t2 (which we are just removed) is
                     // marked as equiv to lj.t1 (which we are replacing lj.t2 with.)
                     for (java.util.Map.Entry<String, String> s: equivMap.entrySet()) {
@@ -381,10 +382,9 @@ public  class LogicalPlan {
                             s.setValue(t1name);
                         }
                     }
-                    
-                // subplanMap.put(lj.t2, j);
+                    // subplanMap.put(lj.t2, j);
+                }
             }
-            
         }
 
         if (subplanMap.size() > 1) {

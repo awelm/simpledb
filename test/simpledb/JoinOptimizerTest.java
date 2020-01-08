@@ -28,7 +28,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
         File temp = File.createTempFile("table", ".dat");
         temp.deleteOnExit();
         HeapFileEncoder.convert(tuples, temp, BufferPool.PAGE_SIZE, columns);
-        return Utility.openHeapFile(columns, colPrefix, temp);
+        return Utility.openHeapFile(columns, colPrefix, temp, null);
 	}
 
 	ArrayList<ArrayList<Integer>> tuples1;
@@ -50,7 +50,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 		super.setUp();
 		// Create some sample tables to work with
 		this.tuples1 = new ArrayList<ArrayList<Integer>>();
-		this.f1 = SystemTestUtil.createRandomHeapFile(10, 1000, 20, null, tuples1, "c");
+		this.f1 = SystemTestUtil.createRandomHeapFile(10, 1000, 20, null, tuples1, "c", null);
 		
 		this.tableName1 = "TA";
 		Database.getCatalog().addTable(f1, tableName1);
@@ -60,7 +60,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 		stats1 = new TableStats(tableId1, 19);
 
 		this.tuples2 = new ArrayList<ArrayList<Integer>>();
-		this.f2 = SystemTestUtil.createRandomHeapFile(10, 10000, 20, null, tuples2, "c");
+		this.f2 = SystemTestUtil.createRandomHeapFile(10, 10000, 20, null, tuples2, "c", null);
 		
 		this.tableName2 = "TB";
 		Database.getCatalog().addTable(f2, tableName2);
@@ -221,19 +221,19 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 		
 		// Create all of the tables, and add them to the catalog
 		ArrayList<ArrayList<Integer>> empTuples = new ArrayList<ArrayList<Integer>>();
-		HeapFile emp = SystemTestUtil.createRandomHeapFile(6, 100000, null, empTuples, "c");	
+		HeapFile emp = SystemTestUtil.createRandomHeapFile(6, 100000, null, empTuples, "c", stats);
 		Database.getCatalog().addTable(emp, "emp");
 		
 		ArrayList<ArrayList<Integer>> deptTuples = new ArrayList<ArrayList<Integer>>();
-		HeapFile dept = SystemTestUtil.createRandomHeapFile(3, 1000, null, deptTuples, "c");	
+		HeapFile dept = SystemTestUtil.createRandomHeapFile(3, 1000, null, deptTuples, "c", stats);
 		Database.getCatalog().addTable(dept, "dept");
 		
 		ArrayList<ArrayList<Integer>> hobbyTuples = new ArrayList<ArrayList<Integer>>();
-		HeapFile hobby = SystemTestUtil.createRandomHeapFile(6, 1000, null, hobbyTuples, "c");
+		HeapFile hobby = SystemTestUtil.createRandomHeapFile(6, 1000, null, hobbyTuples, "c", stats);
 		Database.getCatalog().addTable(hobby, "hobby");
 		
 		ArrayList<ArrayList<Integer>> hobbiesTuples = new ArrayList<ArrayList<Integer>>();
-		HeapFile hobbies = SystemTestUtil.createRandomHeapFile(2, 200000, null, hobbiesTuples, "c");
+		HeapFile hobbies = SystemTestUtil.createRandomHeapFile(2, 200000, null, hobbiesTuples, "c", stats);
 		Database.getCatalog().addTable(hobbies, "hobbies");
 		
 		// Get TableStats objects for each of the tables that we just generated.
@@ -295,7 +295,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 		
 		// Create a large set of tables, and add tuples to the tables
 		ArrayList<ArrayList<Integer>> smallHeapFileTuples = new ArrayList<ArrayList<Integer>>();
-		HeapFile smallHeapFileA = SystemTestUtil.createRandomHeapFile(2, 100, Integer.MAX_VALUE, null, smallHeapFileTuples, "c");		
+		HeapFile smallHeapFileA = SystemTestUtil.createRandomHeapFile(2, 100, Integer.MAX_VALUE, null, smallHeapFileTuples, "c", stats);
 		HeapFile smallHeapFileB = createDuplicateHeapFile(smallHeapFileTuples, 2, "c");		
 		HeapFile smallHeapFileC = createDuplicateHeapFile(smallHeapFileTuples, 2, "c");		
 		HeapFile smallHeapFileD = createDuplicateHeapFile(smallHeapFileTuples, 2, "c");		
@@ -418,7 +418,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 		
 		// Create a large set of tables, and add tuples to the tables
 		ArrayList<ArrayList<Integer>> smallHeapFileTuples = new ArrayList<ArrayList<Integer>>();
-		HeapFile smallHeapFileA = SystemTestUtil.createRandomHeapFile(2, 100, Integer.MAX_VALUE, null, smallHeapFileTuples, "c");		
+		HeapFile smallHeapFileA = SystemTestUtil.createRandomHeapFile(2, 100, Integer.MAX_VALUE, null, smallHeapFileTuples, "c", stats);
 		HeapFile smallHeapFileB = createDuplicateHeapFile(smallHeapFileTuples, 2, "c");		
 		HeapFile smallHeapFileC = createDuplicateHeapFile(smallHeapFileTuples, 2, "c");		
 		HeapFile smallHeapFileD = createDuplicateHeapFile(smallHeapFileTuples, 2, "c");		
