@@ -1,4 +1,4 @@
-# simpledb
+# SimpleDB
 A simple database built from scratch that has some of the basic RDBMS features (SQL query parser, transactions, query optimizer).
 This database was inspired from MIT's database systems course which has all their students implement a basic database from scratch.
 After completing the course, I have been tweaking things and adding my own features/customizations.
