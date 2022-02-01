@@ -72,3 +72,4 @@ To properly implement isolation, we use the *no-steal* eviction policy which gua
 2. Allow for dynamically-sized tuples
 3. Add support for indexes and clustered indexes
 4. Add sort-merge join physical operator
+5. Add MVCC concurrency control
