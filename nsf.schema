@@ -1,0 +1,3 @@
+grants (id int, title string, amount int, org int, pi int, manager int, started string, ended string)
+grant_researchers (researcherid int, grantid int)
+researchers (id int, name string, org int)
